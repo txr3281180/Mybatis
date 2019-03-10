@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace = "mapper.BondUnderwriterMapper">
+
+    <!--级联映射1-->
+    <resultMap id="bondUnderwriterMap" type="entity.BondUnderwriter">
+        <result column="bond_key" property="bondKey"/>
+        <result column="underwriting_role" property="underwritingRole"/>
+        <result column="id" property="underwriter.id"/>
+        <result column="underwriter_id" property="underwriter.underwriterId"/>
+        <result column="underwriter_name" property="underwriter.underwriterName"/>
+        <result column="full_name" property="underwriter.fullName"/>
+    </resultMap>
+
+    <select id="getBondUnderwriter" resultMap="bondUnderwriterMap">
+        SELECT a.`bond_key` bond_key, a.underwriting_role underwriting_role,
+               b.id id, b.`underwriter_id` underwriter_id,
+               b.`underwriter_name` underwriter_name, b.`full_name` full_name
+        FROM bond_underwriter_map a, underwriter b
+        WHERE a.`underwriter_id` = b.`underwriter_id` AND a.bond_key = #{bondKey}
+    </select>
+
+
+    <!--级联映射2-->
+    <resultMap id="bondUnderwriterMap2" type="entity.BondUnderwriter">
+        <result column="bond_key" property="bondKey"/>
+        <result column="underwriting_role" property="underwritingRole"/>
+
+        <association property="underwriter" javaType="entity.Underwriter">
+            <id column="id" property="id"/>
+            <result column="underwriter_id" property="underwriterId"/>
+            <result column="underwriter_name" property="underwriterName"/>
+            <result column="full_name" property="fullName"/>
+        </association>
+    </resultMap>
+
+    <select id="getBondUnderwriter2" resultMap="bondUnderwriterMap2">
+        SELECT a.`bond_key` bond_key, a.underwriting_role underwriting_role,
+               b.id id, b.`underwriter_id` underwriter_id,
+               b.`underwriter_name` underwriter_name, b.`full_name` full_name
+        FROM bond_underwriter_map a, underwriter b
+        WHERE a.`underwriter_id` = b.`underwriter_id` AND a.bond_key = #{bondKey}
+    </select>
+
+
+    <!--级联映射3 分步查询  <setting name="lazyLoadingEnabled" value="false"/>  -->
+    <resultMap id="bondUnderwriterMap3" type="entity.BondUnderwriter">
+        <result column="bond_key" property="bondKey"/>
+        <result column="underwriting_role" property="underwritingRole"/>
+        <association property="underwriter"
+                     select="mapper.UnderwriterMapper.getUnderwriterById"
+                     column="underwriter_id" >  <!-- fetchType="lazy" 单条语句设置懒加载(使用时加载) -->
+            <!-- column 多列参数   column={key1=column1, key2=column2} -->
+        </association>
+    </resultMap>
+
+    <select id="getBondUnderwriter3" resultMap="bondUnderwriterMap3">
+        SELECT * FROM bond_underwriter_map WHERE bond_key = #{bondKey}
+    </select>
+
+
+    <!--级联映射4  嵌套结果集-->
+    <resultMap id="bondUnderwriterMap4" type="entity.BondUnderwriter2">
+        <result column="bond_key" property="bondKey"/>
+
+        <collection property="underwriters" ofType="entity.Underwriter">
+            <id column="id" property="id"/>
+            <result column="underwriter_id" property="underwriterId"/>
+            <result column="underwriter_name" property="underwriterName"/>
+            <result column="full_name" property="fullName"/>
+        </collection>
+    </resultMap>
+
+    <select id="getBondUnderwriter4" resultMap="bondUnderwriterMap4">
+        SELECT a.`bond_key` bond_key, b.id id, b.`underwriter_id` underwriter_id,
+               b.`underwriter_name` underwriter_name, b.`full_name` full_name
+        FROM bond_underwriter_map a, underwriter b
+        WHERE a.`underwriter_id` = b.`underwriter_id` AND a.bond_key = #{bondKey}
+    </select>
+
+
+    <!--级联映射4  嵌套结果集 分步查询-->
+    <resultMap id="bondMap" type="entity.Bond">
+        <result column="bond_key" property="bondKey"/>
+        <result column="bond_name" property="bondName"/>
+
+        <collection property="bondUnderwriters"
+                    select="getBondUnderwriter2"
+                    column="bond_key" fetchType="eager">  <!-- fetchType="lazy" 单条语句设置懒加载(使用时加载) -->
+            <!-- column 多列参数   column={key1=column1, key2=column2} -->
+        </collection>
+    </resultMap>
+
+    <select id="getBond" resultMap="bondMap">
+        SELECT * FROM bond WHERE bond_key = #{bondKey}
+    </select>
+
+
+
+    <!--鉴别器-->
+    <resultMap id="bondUnderwriterMap5" type="entity.BondUnderwriter">
+        <result column="bond_key" property="bondKey"/>
+        <result column="underwriting_role" property="underwritingRole"/>
+
+        <discriminator javaType="string" column="underwriting_role">
+            <case value="主承销商" resultType="entity.BondUnderwriter">
+                <association property="underwriter"
+                             select="mapper.UnderwriterMapper.getUnderwriterById"
+                             column="underwriter_id" >
+                </association>
+            </case>
+            <case value="联席主承销商" resultType="entity.BondUnderwriter">
+                <association property="underwriter" javaType="entity.Underwriter">
+                    <id column="id" property="id"/>
+                    <result column="underwriter_name" property="underwriterName"/>
+                </association>
+            </case>
+        </discriminator>
+    </resultMap>
+
+    <select id="getBondUnderwriter5" resultMap="bondUnderwriterMap5">
+        SELECT * FROM bond_underwriter_map WHERE bond_key = #{bondKey}
+    </select>
+
+</mapper>

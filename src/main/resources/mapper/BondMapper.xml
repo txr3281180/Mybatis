@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.BondMapper">
+
+    <resultMap id="bond2Map" type="entity.Bond2">
+        <result column="bond_key" property="bondKey"/>
+        <result column="bond_name" property="bondName"/>
+        <result column="issuer_code" property="issuerCode"/>
+        <result column="issuer_name" property="issuerName"/>
+        <result column="bond_type" property="bondType"/>
+        <result column="planned_issue_end_date" property="issueEndDate"/>
+    </resultMap>
+
+    <!--
+        抽取可重用的sql片段。方便后面引用
+        1、sql抽取：经常将要查询的列名，或者插入用的列名抽取出来方便引用
+        2、include来引用已经抽取的sql：
+        3、include还可以自定义一些property，
+            sql标签内部就能使用自定义的属性 include-property：取值的正确方式${prop}, #{不能使用这种方式}
+            例：
+                <sql id="bondSql">bond_key, bond_id</sql>
+                <include refid="bondSql">
+                    <property name="newColumn" value="abc"></property>
+                </include>
+
+                ${newColumn}
+    -->
+    <sql id="bondSql">select * from bond</sql>
+
+    <!-- 1. where 1=1  2. <where> </where>  3.<trim>     //ognl -->
+    <select id="queryBondByCondition" resultMap="bond2Map">
+        <include refid="bondSql"/>
+        <trim prefix="where" suffixOverrides="and">
+            <if test="bondKey!=null">bond_key = #{bondKey} and</if>
+            <if test="bondName!=null and bondName.trim()!=''">bond_name like #{bondName} and</if>
+            <if test="startDate!=null">planned_issue_end_date &gt;= #{startDate} and</if>
+            <if test="endDate!=null">planned_issue_end_date &lt; #{endDate} and</if>
+        </trim>
+    </select>
+
+    <!--只拼接第一个条件，所以不用加and-->
+    <select id="queryBondByCondition2" resultMap="bond2Map">
+        select * from bond
+        <where>
+            <choose>
+                <when test="bondKey!=null">bond_key = #{bondKey}</when>
+                <when test="bondName!=null and bondName.trim()!=''">bond_name like #{bondName}</when>
+                <otherwise>
+                    planned_issue_end_date &gt;= #{startDate} and planned_issue_end_date &lt; #{endDate}
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+
+    <!--也可以使用trim标签去逗号-->
+    <update id="updateBond">
+        update bond
+        <set>
+            <if test="bondName!=null">bond_name = #{bondName},</if>
+            <if test="issuerName!=null">issuer_name = #{issuerName},</if>
+        </set>
+        where bond_key = #{bondKey}
+    </update>
+
+    <!--使用${}将参数拼接好后传入 select * from bond where bond_key in (${bondKeys})-->
+    <select id="getBondByBondKeys" resultMap="bond2Map">
+        select * from bond where bond_key in
+        <foreach collection="bondKeys" item="bondKey" separator="," open="(" close=")" index="index">
+            #{bondKey}
+        </foreach>
+    </select>
+
+    <!--foreach 批量insert(写法示例) 【oracle不支持该写法】-->
+    <insert id="insertBond">
+        insert into bond (bond_key, bond_id, bond_name) values
+        <foreach collection="bonds" item="bond" separator=",">
+            (#{bond.bondKey}, #{bond.bondId},#{bond.bondName})
+        </foreach>
+    </insert>
+
+    <!--批量update(写法示例) 【需要设置数据库连接属性allowMultiQueries=true】-->
+    <update id="updateBonds">
+        <foreach collection="bonds" item="bond" separator=";">
+            update bond set bond_name = #{bondName} , issuer_name = #{issuerName} where bond_key = #{bondKey}
+        </foreach>
+    </update>
+
+
+    <!--
+        不只是方法传递过来的参数可以被用来判断,取值, mybatis默认还有两个内置参数：
+            _parameter:代表整个参数
+                    单个参数：_parameter就是这个参数
+                    多个参数：参数会被封装为一个map；_parameter就是代表这个map
+            _databaseId:如果配置了databaseIdProvider标签。 _databaseId就是代表当前数据库的别名
+        <bind>：可以将OGNL表达式的值绑定到一个变量中，方便后来引用这个变量的值
+     -->
+    <!--
+       <select resultType="com.atguigu.mybatis.bean.Employee" id="getEmpsTestInnerParameter">
+            <bind value="'%'+lastName+'%'" name="_lastName"/>
+            <if test="_databaseId=='mysql'">
+                select * from tbl_employee
+                <if test="_parameter!=null">where last_name like #{lastName}</if>
+            </if>
+            <if test="_databaseId=='oracle'">
+                select * from employees
+                <if test="_parameter!=null">where last_name like #{_parameter.lastName}</if>
+            </if>
+        </select>
+
+        <sql id="insertColumn">
+            <if test="_databaseId=='oracle'">employee_id,last_name,email</if>
+            <if test="_databaseId=='mysql'">last_name,email,gender,d_id</if>
+        </sql>
+     -->
+
+</mapper>
