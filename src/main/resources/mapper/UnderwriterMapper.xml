@@ -59,4 +59,8 @@
     <delete id="deleteUnderwriter">
         delete from underwriter where underwriter_id = #{underwriterId}
     </delete>
+
+    <select id="getAllUnderwriter" resultMap="myUnderwriter">
+        select * from underwriter
+    </select>
 </mapper>

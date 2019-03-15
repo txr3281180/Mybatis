@@ -70,4 +70,6 @@ public interface UnderwriterMapper {
 
     @MapKey("underwriterName")  //相同的Key会覆盖
     Map<String, List<Underwriter>> getUnderwriterMap3(String name);
+
+    List<Underwriter> getAllUnderwriter();
 }

@@ -6,6 +6,8 @@
 
 	<!--mybatis可以使用properties来引入外部properties配置文件的内容-->
 	<properties resource="dbconfig.properties"></properties>
+
+	<!--全局配置=============================-->
 	<settings>
 		<!-- 全局配置缓存 -->
 		<setting name="cacheEnabled" value="true"/>
@@ -19,13 +21,19 @@
 		<setting name="mapUnderscoreToCamelCase" value="true"/>
 	</settings>
 
-	<!-- 配置分页插件 -->
-	<!--
-		<plugins>
-			<plugin interceptor="com.github.pagehelper.PageInterceptor"></plugin>
-		</plugins>
-	-->
-	
+
+	<!-- 配置插件 ============================ -->
+
+	<plugins>
+		<!--自定义插件-->
+		<plugin interceptor="plugin.MyPlugin">
+			<property name="name" value="xinrui.tian"/> <!--通过插件拦截该属性-->
+		</plugin>
+
+		<!--分页插件-->
+		<plugin interceptor="com.github.pagehelper.PageInterceptor"></plugin>
+	</plugins>
+
 	<!--
 	    <typeAliases>：别名处理器：可以为我们的java类型起别名 	别名不区分大小写
 		<typeAlias>:为某个java类型起别名
