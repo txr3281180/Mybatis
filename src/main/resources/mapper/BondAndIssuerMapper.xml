@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace = "mapper.BondAndIssuerMapper">
+
+    <sql id="bond_issuer_sql">
+        select a.id issuerId, a.issuer_code issuer_code, a.issuer_name issuer_name,
+               b.id bondId, b.bond_key bond_key, b.short_name short_name
+        from issuer_info a, bond_info b
+        where a.issuer_code = b.issuer_code and a.issuer_code = #{issuerCode};
+    </sql>
+
+    <!--级联映射1 : 实体类中引用另一个实体类 -->
+    <resultMap id="issuer_bond_mapping1" type="entity.IssuerBond">
+        <id column="issuerId" property="id"/>
+        <result column="issuer_code" property="issuerCode"/>
+        <result column="issuer_name" property="issuerName"/>
+
+        <result column="bondId" property="bondInfo.id"/>
+        <result column="bond_key" property="bondInfo.bondKey"/>
+        <result column="short_name" property="bondInfo.shortName"/>
+    </resultMap>
+
+    <select id="getBondAndIssuer1" resultMap="issuer_bond_mapping1">
+        <include refid="bond_issuer_sql"/>
+    </select>
+
+    <!--级联映射2(映射1的第二种写法) : 实体类中引用另一个实体类 -->
+    <resultMap id="issuer_bond_mapping2" type="entity.BondIssuer">
+        <id column="bondId" property="id"/>
+        <result column="bond_key" property="bondKey"/>
+        <result column="short_name" property="shortName"/>
+
+        <association property="issuerInfo" javaType="entity.IssuerInfo">
+            <id column="issuerId" property="id"/>
+            <result column="issuer_code" property="issuerCode"/>
+            <result column="issuer_name" property="issuerName"/>
+        </association>
+    </resultMap>
+
+    <select id="getBondAndIssuer2" resultMap="issuer_bond_mapping2">
+        <include refid="bond_issuer_sql"/>
+    </select>
+
+
+    <!--级联映射3 分步查询 -->
+    <resultMap id="issuer_bond_mapping3" type="entity.BondIssuer">
+        <id column="bondId" property="id"/>
+        <result column="bond_key" property="bondKey"/>
+        <result column="short_name" property="shortName"/>
+
+        <association property="issuerInfo"
+                     select="mapper.IssuerInfoMapper.getIssuerByIssuerCode"
+                     column="issuer_code" >
+            <!-- 全局配置懒加载 <setting name="lazyLoadingEnabled" value="false"/>-->
+            <!-- fetchType="lazy" 单条语句设置懒加载(使用时加载) -->
+            <!-- column 多列参数查询  column={key1=column1, key2=column2} -->
+        </association>
+    </resultMap>
+
+    <select id="getBondAndIssuer3" resultMap="issuer_bond_mapping3">
+        SELECT * FROM bond_info WHERE bond_key = #{bondKey}
+    </select>
+
+    
+    <!--级联映射4  嵌套结果集-->
+    <resultMap id="issuer_bond_mapping4" type="entity.IssuerBonds">
+        <id column="issuerId" property="id"/>
+        <result column="issuer_code" property="issuerCode"/>
+        <result column="issuer_name" property="issuerName"/>
+
+        <collection property="bondInfos" ofType="entity.BondInfo">
+            <id column="bondId" property="id"/>
+            <result column="bond_key" property="bondKey"/>
+            <result column="short_name" property="shortName"/>
+        </collection>
+    </resultMap>
+
+    <select id="getBondAndIssuer4" resultMap="issuer_bond_mapping4">
+        <include refid="bond_issuer_sql"/>
+    </select>
+
+
+    <!--级联映射4  嵌套结果集 分步查询-->
+    <resultMap id="issuer_bond_mapping5" type="entity.IssuerBonds">
+        <id column="issuerId" property="id"/>
+        <result column="issuer_code" property="issuerCode"/>
+        <result column="issuer_name" property="issuerName"/>
+
+        <collection property="bondInfos"
+                    select="mapper.BondInfoMapper.getBondByIssuerCode"
+                    column="issuer_code" fetchType="eager">
+            <!-- fetchType="lazy" 单条语句设置懒加载(使用时加载) -->
+            <!-- column 多列参数   column={key1=column1, key2=column2} -->
+        </collection>
+    </resultMap>
+
+    <select id="getBondAndIssuer5" resultMap="issuer_bond_mapping5">
+        SELECT * FROM issuer_info WHERE issuer_code = #{issuerCode}
+    </select>
+
+
+    <!--鉴别器-->
+    <resultMap id="issuer_bond_mapping6" type="entity.IssuerBonds">
+        <id column="id" property="id"/>
+        <result column="issuer_code" property="issuerCode"/>
+        <result column="issuer_name" property="issuerName"/>
+
+        <discriminator javaType="string" column="issuer_name">
+            <case value="广发银行股份有限公司" resultType="entity.IssuerBonds">
+                <collection property="bondInfos"
+                             select="mapper.BondInfoMapper.getBondByIssuerCode"
+                             column="issuer_code" >
+                </collection>
+            </case>
+            <case value="天津市滨海水业集团有限公司" resultType="entity.IssuerBonds">
+                <collection property="bondInfos" ofType="entity.BondInfo">
+                    <result column="issuer_code" property="issuerCode"/>
+                </collection>
+            </case>
+        </discriminator>
+    </resultMap>
+
+    <select id="getBondAndIssuer6" resultMap="issuer_bond_mapping6">
+        SELECT * FROM issuer_info WHERE issuer_code = #{issuerCode}
+    </select>
+
+</mapper>

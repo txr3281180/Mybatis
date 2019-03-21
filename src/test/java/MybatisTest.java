@@ -1,12 +1,11 @@
-import entity.Bond;
-import entity.Bond2;
-import entity.BondQueryCondition;
-import entity.BondUnderwriter;
-import entity.BondUnderwriter2;
-import entity.Underwriter;
-import mapper.BondMapper;
-import mapper.BondUnderwriterMapper;
-import mapper.UnderwriterMapper;
+import entity.BondInfo;
+import entity.BondIssuer;
+import entity.IssuerBond;
+import entity.IssuerBonds;
+import entity.IssuerInfo;
+import mapper.BondAndIssuerMapper;
+import mapper.BondInfoMapper;
+import mapper.IssuerInfoMapper;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -44,107 +43,112 @@ public class MybatisTest {
      *   Underwriter underwriter = openSession.selectOne("mapper.UnderwriterMapper.getUnderwriterById", "D000011");
      */
     @Test
-    public void testUnderwriter() {
-        Underwriter underwriter = new Underwriter();
-        underwriter.setUnderwriterId("test001");
-        underwriter.setUnderwriterName("Test承销商");
-        underwriter.setFullName("Test承销商");
+    public void test1() {
+        IssuerInfo issuerInfo = new IssuerInfo();
+        issuerInfo.setIssuerCode("test001");
+        issuerInfo.setIssuerName("test_Issuer");
+        issuerInfo.setSwSector("申万Test");
+        issuerInfo.setSwSubSector("申万SubTest");
 
         //获取SqlSession 实例，能直接执行已经映射的sql语句
         SqlSession openSession = sqlSessionFactory.openSession();
         try {
-            UnderwriterMapper mapper = openSession.getMapper(UnderwriterMapper.class);
-            Integer integer = mapper.addUnderwriter(underwriter);  //增
-            System.out.println(integer);
+            IssuerInfoMapper mapper = openSession.getMapper(IssuerInfoMapper.class);
+            long l = mapper.addIssuerInfo(issuerInfo);//增
+            System.out.println(l);
 
-            underwriter.setFullName("Test金融公司");  //改
-            Boolean success = mapper.updateUnderwriter(underwriter);
+            issuerInfo.setIssuerName("test_Issuer_update");  //改
+            boolean success = mapper.updateIssuerInfo(issuerInfo);
             System.out.println(success);
 
-            Underwriter underwriterById = mapper.getUnderwriterById(underwriter.getUnderwriterId());
-            System.out.println(underwriterById);  //查
+            IssuerInfo result = mapper.getIssuerByIssuerCode(issuerInfo.getIssuerCode());
+            System.out.println(result);  //查
 
-            integer = mapper.deleteUnderwriter(underwriter.getUnderwriterId());  //删
-            System.out.println(integer);
+            int i = mapper.deleteIssuerInfo(issuerInfo.getIssuerCode());  //删
+            System.out.println(i);
 
             //openSession.commit();
 
-            List<Underwriter> allUnderwriter = mapper.getUnderwriterLikeName("%北京%");//返回List
-            System.out.println(allUnderwriter);
+            List<IssuerInfo> issuerByName = mapper.getIssuerLikeName("%北京%");//返回List
+            System.out.println(issuerByName);
 
-            Map<String, Object> underwriterMap = mapper.getUnderwriterMap("B000071");//返回Map(key属性名， value属性值)
-            System.out.println(underwriterMap);
+            Map<String, Object> issuerMap1 = mapper.getIssuerMap1("B000071");//返回Map(key属性名， value属性值)
+            System.out.println(issuerMap1);
 
-            Map<String, Underwriter> underwriterMap2 = mapper.getUnderwriterMap2("%北京%"); //返回Map （key属性名， value实体类）
-            System.out.println(underwriterMap2);
+            Map<String, IssuerInfo> issuerMap2 = mapper.getIssuerMap2("%北京%"); //返回Map （key属性名， value实体类）
+            System.out.println(issuerMap2);
 
             // 查看原码,相同的Key会覆盖
-            //Map<String, List<Underwriter>> underwriterMap3 = mapper.getUnderwriterMap3("北京银行");
-            //System.out.println(underwriterMap3);
+            //Map<String, List<IssuerInfo>> issuerMap3 = mapper.getIssuerMap3("北京银行");
+            //System.out.println(issuerMap3);
 
         } finally {
             openSession.close();
         }
     }
 
+    /** 级联映射 */
     @Test
-    public void testBondUnderwriter() {
+    public void test2() {
         SqlSession openSession = sqlSessionFactory.openSession();
         try {
-            BondUnderwriterMapper mapper = openSession.getMapper(BondUnderwriterMapper.class);
-            List<BondUnderwriter> bondUnderwriters = mapper.getBondUnderwriter("N0000502016CORCSP02");
-            System.out.println(bondUnderwriters);
+            BondAndIssuerMapper mapper = openSession.getMapper(BondAndIssuerMapper.class);
+            List<IssuerBond> bondAndIssuer1 = mapper.getBondAndIssuer1("G000047");
+            System.out.println(bondAndIssuer1);  //（一个）issuer -> (多个)bond
 
-            List<BondUnderwriter> bondUnderwriters2 = mapper.getBondUnderwriter2("N0000502016CORCSP02");
-            System.out.println(bondUnderwriters2);
+            //使用 IssuerBond 做映射  bondInfo 会被覆盖，获取的只有最后一个bond
+            List<BondIssuer> bondAndIssuer2 = mapper.getBondAndIssuer2("G000047");
+            System.out.println(bondAndIssuer2);  //(多个) bond ->（一个）issuer []
 
-            List<BondUnderwriter> bondUnderwriters3 = mapper.getBondUnderwriter3("N0000502016CORCSP02");
-            System.out.println(bondUnderwriters3);
+            BondIssuer bondIssuer1 = mapper.getBondAndIssuer3("G0000472015NCD070");
+            System.out.println(bondIssuer1);
 
-            BondUnderwriter2 bondUnderwriters4 = mapper.getBondUnderwriter4("N0000502016CORCSP02");
-            System.out.println(bondUnderwriters4);
+            IssuerBonds issuerBonds1 = mapper.getBondAndIssuer4("G000047");
+            System.out.println(issuerBonds1);
 
-            Bond bond = mapper.getBond("N0000502016CORCSP02");
-            System.out.println(bond);
+            IssuerBonds issuerBonds2 = mapper.getBondAndIssuer5("G000047");
+            System.out.println(issuerBonds2);
 
-            List<BondUnderwriter> bondUnderwriters5 = mapper.getBondUnderwriter5("N0000502016CORCSP02");
-            System.out.println(bondUnderwriters5);
+            IssuerBonds issuerBonds = mapper.getBondAndIssuer6("G000047");  //T000316
+            System.out.println(issuerBonds);
         } finally {
             openSession.close();
         }
     }
 
-    /*动态SQL*/
+    /**
+     * 动态SQL  BondInfoMapper
+     * */
     @Test
     public void testDynamicSql() {
         SqlSession openSession = sqlSessionFactory.openSession();
         try {
-            BondMapper mapper = openSession.getMapper(BondMapper.class);
+            BondInfoMapper mapper = openSession.getMapper(BondInfoMapper.class);
 
-            BondQueryCondition condition1 = new BondQueryCondition();
-            condition1.setBondName("%海%");
-            condition1.setStartDate("2018-04-16");
-            condition1.setEndDate("2018-04-18");
-            List<Bond2> bonds = mapper.queryBondByCondition(condition1);
+            BondInfo condition = new BondInfo();
+            condition.setShortName("%浦发%");
+            condition.setIssueStartDate("20140416");
+            condition.setIssueEndDate("20180418");
+            List<BondInfo> bonds = mapper.queryBond1(condition);
             System.out.println(bonds);
 
-            condition1.setBondKey("S0000652018CORLMN02");
-            List<Bond2> bonds2 = mapper.queryBondByCondition2(condition1);
+            condition.setBondKey("S0001192015NCD032");
+            List<BondInfo> bonds2 = mapper.queryBond2(condition);
             System.out.println(bonds2);
 
-            Bond2 bond = new Bond2();
-            bond.setBondKey("S0000292018CORLMN03");
-            bond.setBondName("18鲁宏桥MTN003_test");
-            bond.setIssuerName("山东宏桥新型材料有限公司_test");
-            Boolean aBoolean = mapper.updateBond(bond);
+            BondInfo bond = new BondInfo();
+            bond.setBondKey("S0001192015NCD032");
+            bond.setShortName("浦发test");
+            bond.setFullName("浦东发展银行test");
+            boolean aBoolean = mapper.updateBond(bond);
             System.out.println(aBoolean);
 
             //openSession.commit();
 
             List<String> bondKeys = new ArrayList<>();
-            bondKeys.add("S0000292018CORLMN03");
-            bondKeys.add("S0000652018CORLMN02");
-            List<Bond2> bonds3 = mapper.getBondByBondKeys(bondKeys);
+            bondKeys.add("B0001492014CORPPN03");
+            bondKeys.add("H0001112014CORPPN03");
+            List<BondInfo> bonds3 = mapper.queryBond3(bondKeys);
             System.out.println(bonds3);
 
         } finally {
@@ -159,24 +163,24 @@ public class MybatisTest {
         try {
             /*测试一级缓存*/
 
-            UnderwriterMapper mapper = openSession.getMapper(UnderwriterMapper.class);
-            Underwriter underwriter1 = mapper.getUnderwriterById("F000003");
-            System.out.println(underwriter1);
+            IssuerInfoMapper mapper = openSession.getMapper(IssuerInfoMapper.class);
+            IssuerInfo issuerInfo1 = mapper.getIssuerByIssuerCode("F000003");
+            System.out.println(issuerInfo1);
 
             //sqlSession相同， 两次查询相同, sql只发送了一次
-            Underwriter underwriter2 = mapper.getUnderwriterById("F000003");
-            System.out.println(underwriter2);
+            IssuerInfo issuerInfo2 = mapper.getIssuerByIssuerCode("F000003");
+            System.out.println(issuerInfo2);
 
             //sqlSession不同， 两次查询相同, 发送了两次sql
             SqlSession sqlSession2 = sqlSessionFactory.openSession();
-            UnderwriterMapper mapper2 = sqlSession2.getMapper(UnderwriterMapper.class);
-            Underwriter underwriter3 = mapper2.getUnderwriterById("F000003");
-            System.out.println(underwriter3);
+            IssuerInfoMapper mapper2 = sqlSession2.getMapper(IssuerInfoMapper.class);
+            IssuerInfo issuerInfo3 = mapper2.getIssuerByIssuerCode("F000003");
+            System.out.println(issuerInfo3);
 
             //sqlSession相同，手动清除了一级缓存（缓存清空） 发送两次sql
             sqlSession2.clearCache();
-            Underwriter underwriter4 = mapper2.getUnderwriterById("F000003");
-            System.out.println(underwriter4);
+            IssuerInfo issuerInfo4 = mapper2.getIssuerByIssuerCode("F000003");
+            System.out.println(issuerInfo4);
 
             //sqlSession相同，查询条件不同.(当前一级缓存中还没有这个数据) 发送两次sql
             //sqlSession相同，两次查询之间执行了增删改操作(这次增删改可能对当前数据有影) 发送两次sql

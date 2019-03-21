@@ -1,6 +1,6 @@
 package mapper;
 
-import entity.Underwriter;
+import entity.IssuerInfo;
 import org.apache.ibatis.annotations.MapKey;
 
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.Map;
  *
  * 【参数解析  返回值映射】
  */
-public interface UnderwriterMapper {
+public interface IssuerInfoMapper {
 
     /*
     * 【参数解析  返回值映射】
@@ -53,23 +53,24 @@ public interface UnderwriterMapper {
                     select * from tbl_employee order by ${f_name} ${order}
     * */
 
-    Underwriter getUnderwriterById (String underwriterId);
+    IssuerInfo getIssuerByIssuerCode(String issuerCode);
 
-    Integer addUnderwriter(Underwriter underwriter);
+    List<IssuerInfo> getIssuerLikeName(String name);
 
-    Boolean updateUnderwriter(Underwriter underwriter);
+    Map<String, Object> getIssuerMap1(String issuerCode);
 
-    Integer deleteUnderwriter(String underwriterId);
+    @MapKey("issuerCode")  //指定哪个属性作为 map的key
+    Map<String, IssuerInfo> getIssuerMap2(String name);
 
-    List<Underwriter> getUnderwriterLikeName(String name);
+    //@MapKey("issuerName")  //相同的Key会覆盖
+    //Map<String, List<Underwriter>> getIssuerMap3(String name);
 
-    Map<String, Object> getUnderwriterMap(String underwriterId);
+    long addIssuerInfo(IssuerInfo issuerInfo);
 
-    @MapKey("underwriterId")  //指定哪个属性作为 map的key
-    Map<String, Underwriter> getUnderwriterMap2(String name);
+    boolean updateIssuerInfo(IssuerInfo issuerInfo);
 
-    @MapKey("underwriterName")  //相同的Key会覆盖
-    Map<String, List<Underwriter>> getUnderwriterMap3(String name);
+    int deleteIssuerInfo(String issuerCode);
 
-    List<Underwriter> getAllUnderwriter();
+    List<IssuerInfo> getAllIssuer();
+
 }

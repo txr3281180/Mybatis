@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="mapper.BondMapper">
+<mapper namespace="mapper.BondInfoMapper">
 
-    <resultMap id="bond2Map" type="entity.Bond2">
+    <resultMap id="bond_column_mapping" type="entity.BondInfo">
+        <id column="id" property="id"/>
         <result column="bond_key" property="bondKey"/>
-        <result column="bond_name" property="bondName"/>
+        <result column="short_name" property="shortName"/>
+        <result column="full_name" property="fullName"/>
         <result column="issuer_code" property="issuerCode"/>
-        <result column="issuer_name" property="issuerName"/>
         <result column="bond_type" property="bondType"/>
-        <result column="planned_issue_end_date" property="issueEndDate"/>
+        <result column="bond_subtype" property="bondSubtype"/>
+        <result column="maturity_term" property="maturityTerm"/>
+        <result column="term_unit" property="termUnit"/>
+        <result column="maturity_date" property="maturityDate"/>
+        <result column="issue_start_date" property="issueStartDate"/>
+        <result column="issue_end_date" property="issueEndDate"/>
+        <result column="coupon_rate" property="couponRate"/>
+        <result column="modify_date" property="modifyDate"/>
+        <result column="create_date" property="createDate"/>
     </resultMap>
 
     <!--
@@ -26,26 +35,25 @@
 
                 ${newColumn}
     -->
-    <sql id="bondSql">select * from bond</sql>
-
+    <sql id="bond_sql">select * from bond_info</sql>
     <!-- 1. where 1=1  2. <where> </where>  3.<trim>     //ognl -->
-    <select id="queryBondByCondition" resultMap="bond2Map">
-        <include refid="bondSql"/>
+    <select id="queryBond1" resultMap="bond_column_mapping">
+        <include refid="bond_sql"/>
         <trim prefix="where" suffixOverrides="and">
             <if test="bondKey!=null">bond_key = #{bondKey} and</if>
-            <if test="bondName!=null and bondName.trim()!=''">bond_name like #{bondName} and</if>
-            <if test="startDate!=null">planned_issue_end_date &gt;= #{startDate} and</if>
-            <if test="endDate!=null">planned_issue_end_date &lt; #{endDate} and</if>
+            <if test="shortName!=null and shortName.trim()!=''">short_name like #{shortName} and</if>
+            <if test="issueStartDate!=null">issue_start_date &gt;= #{issueStartDate} and</if>
+            <if test="issueEndDate!=null">issue_start_date &lt; #{issueEndDate} and</if>
         </trim>
     </select>
 
     <!--只拼接第一个条件，所以不用加and-->
-    <select id="queryBondByCondition2" resultMap="bond2Map">
-        select * from bond
+    <select id="queryBond2" resultMap="bond_column_mapping">
+        <include refid="bond_sql"/>
         <where>
             <choose>
                 <when test="bondKey!=null">bond_key = #{bondKey}</when>
-                <when test="bondName!=null and bondName.trim()!=''">bond_name like #{bondName}</when>
+                <when test="fullName!=null and fullName.trim()!=''">full_name like #{fullName}</when>
                 <otherwise>
                     planned_issue_end_date &gt;= #{startDate} and planned_issue_end_date &lt; #{endDate}
                 </otherwise>
@@ -53,36 +61,37 @@
         </where>
     </select>
 
-    <!--也可以使用trim标签去逗号-->
-    <update id="updateBond">
-        update bond
-        <set>
-            <if test="bondName!=null">bond_name = #{bondName},</if>
-            <if test="issuerName!=null">issuer_name = #{issuerName},</if>
-        </set>
-        where bond_key = #{bondKey}
-    </update>
-
     <!--使用${}将参数拼接好后传入 select * from bond where bond_key in (${bondKeys})-->
-    <select id="getBondByBondKeys" resultMap="bond2Map">
-        select * from bond where bond_key in
+    <select id="queryBond3" resultMap="bond_column_mapping">
+        <include refid="bond_sql"/>
+        where bond_key in
         <foreach collection="bondKeys" item="bondKey" separator="," open="(" close=")" index="index">
             #{bondKey}
         </foreach>
     </select>
 
-    <!--foreach 批量insert(写法示例) 【oracle不支持该写法】-->
-    <insert id="insertBond">
-        insert into bond (bond_key, bond_id, bond_name) values
+    <!--也可以使用trim标签去逗号-->
+    <update id="updateBond">
+        update bond_info
+        <set>
+            <if test="shortName!=null">short_name = #{shortName},</if>
+            <if test="fullName!=null">full_name = #{fullName},</if>
+        </set>
+        where bond_key = #{bondKey}
+    </update>
+
+    <!--foreach 批量insert 【oracle不支持该写法】-->
+    <insert id="insertBonds">
+        INSERT INTO `bond_info` (`bond_key`, `short_name`, `full_name`, `issuer_code`,`bond_type`, `bond_subtype`, `maturity_term`, `term_unit`, `maturity_date`, `issue_start_date`, `issue_end_date`, `coupon_rate`) VALUES
         <foreach collection="bonds" item="bond" separator=",">
-            (#{bond.bondKey}, #{bond.bondId},#{bond.bondName})
+            (#(bond.bondKey},#(bond.shortName},#(bond.fullName},#(bond.issuerCode},#(bond.bondType},#(bond.bondSubtype},#(bond.maturityTerm},#(bond.termUnit},#(bond.maturityDate},#(bond.issueStartDate},#(bond.issueEndDate},#(bond.couponRate})
         </foreach>
     </insert>
 
-    <!--批量update(写法示例) 【需要设置数据库连接属性allowMultiQueries=true】-->
+    <!--批量update 【需要设置数据库连接属性allowMultiQueries=true】-->
     <update id="updateBonds">
         <foreach collection="bonds" item="bond" separator=";">
-            update bond set bond_name = #{bondName} , issuer_name = #{issuerName} where bond_key = #{bondKey}
+            update bond_info set coupon_rate = #{couponRate} where bond_key = #{bondKey}
         </foreach>
     </update>
 
@@ -113,5 +122,11 @@
             <if test="_databaseId=='mysql'">last_name,email,gender,d_id</if>
         </sql>
      -->
+
+    <select id="getBondByIssuerCode" resultMap="bond_column_mapping">
+        <include refid="bond_sql"/>
+        where issuer_code = #{issuerCode}
+    </select>
+
 
 </mapper>

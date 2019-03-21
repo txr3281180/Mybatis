@@ -1,8 +1,8 @@
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import entity.Underwriter;
-import mapper.UnderwriterMapper;
+import entity.IssuerInfo;
+import mapper.IssuerInfoMapper;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -39,9 +39,9 @@ public class PluginTest {
     public void testMyPlugin() throws IOException {
         SqlSession openSession = getSqlSessionFactory().openSession();
         try {
-            UnderwriterMapper mapper = openSession.getMapper(UnderwriterMapper.class);
-            Underwriter f000003 = mapper.getUnderwriterById("F000003");
-            System.out.println(f000003);
+            IssuerInfoMapper mapper = openSession.getMapper(IssuerInfoMapper.class);
+            IssuerInfo issuerInfo = mapper.getIssuerByIssuerCode("F000003");
+            System.out.println(issuerInfo);
         }finally {
             openSession.close();
         }
@@ -54,13 +54,13 @@ public class PluginTest {
 
         SqlSession openSession = getSqlSessionFactory().openSession();
         try {
-            UnderwriterMapper mapper = openSession.getMapper(UnderwriterMapper.class);
+            IssuerInfoMapper mapper = openSession.getMapper(IssuerInfoMapper.class);
             //分页
             Page<Object> page = PageHelper.startPage(10, 5);
 
-            List<Underwriter> list = mapper.getAllUnderwriter();
-            for (Underwriter underwriter : list) {
-                System.out.println(underwriter);
+            List<IssuerInfo> list = mapper.getAllIssuer();
+            for (IssuerInfo issuerInfo : list) {
+                System.out.println(issuerInfo);
             }
 
             //分页信息

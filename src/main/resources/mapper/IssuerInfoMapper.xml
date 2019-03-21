@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace = "mapper.IssuerInfoMapper">
+
+
+    <resultMap id="issuer_column_mapping" type="entity.IssuerInfo">
+        <id column="id" property="id"/>
+        <result column="issuer_code" property="issuerCode" />
+        <result column="issuer_name" property="issuerName" />
+        <result column="sw_sector" property="swSector" />
+        <result column="sw_sub_sector" property="swSubSector" />
+        <result column="province" property="province" />
+        <result column="city" property="city" />
+        <result column="register_capital" property="registerCapital" />
+        <result column="modify_date" property="modifyDate" />
+        <result column="create_date" property="createDate" />
+    </resultMap>
+    <select id="getIssuerByIssuerCode" resultMap="issuer_column_mapping">
+        SELECT * FROM issuer_info WHERE issuer_code = #{issuerCode}
+    </select>
+
+    <!-- resultType 与 resultMap 二选一-->
+
+    <!--返回List-->
+    <select id="getIssuerLikeName" resultMap="issuer_column_mapping">
+        SELECT * FROM issuer_info WHERE issuer_name LIKE #{name}
+    </select>
+
+    <!--返回Map （key属性名， value属性值）-->
+    <select id="getIssuerMap1" resultType="map">
+        select id,issuer_code as issuerCode,issuer_name as issuerName,
+               sw_sector as swSector,sw_sub_sector as swSubSector,province,city,
+               register_capital as registerCapital,modify_date as modifyDate,create_date as createDate
+        from issuer_info where issuer_code = #{issuerCode};
+    </select>
+
+    <!--返回Map （key属性名， value实体类）-->
+    <select id="getIssuerMap2" resultMap="issuer_column_mapping">
+        SELECT * FROM issuer_info WHERE issuer_name LIKE #{name}
+    </select>
+
+    <!--
+        无法映射 会覆盖相同的entity  // 返回Map （key属性名， value List）
+        <select id="getIssuerMap3" resultType="entity.IssuerInfo">
+            select id,issuer_code as issuerCode,issuer_name as issuerName,
+                   sw_sector as swSector,sw_sub_sector as swSubSector,province,city,
+                   register_capital as registerCapital,modify_date as modifyDate,create_date as createDate
+            from issuer_info where issuer_name LIKE #{name};
+        </select>
+    -->
+
+    <!--
+        useGeneratedKeys="true" 指定自增主键
+        keyProperty="id"  自增主键后的值映射给实体类的指定属性
+
+        oracle不支持自增主键，使用者<selectKey> [order sql在插入之前运行]
+            <selectKey keyProperty="id" order="BEFORE" resultType="Integer">
+                select UNDERWRITER_SEQ.nextval from dual
+            </selectKey>
+     -->
+    <insert id="addIssuerInfo" parameterType="entity.IssuerInfo" useGeneratedKeys="true" keyProperty="id">
+        insert into `issuer_info` (`issuer_code`, `issuer_name`, `sw_sector`, `sw_sub_sector`, `province`, `city`, `register_capital`)
+        values (#{issuerCode},#{issuerName},#{swSector},#{swSubSector},#{province},#{city},#{registerCapital})
+    </insert>
+    
+    <update id="updateIssuerInfo">
+        update issuer_info
+        set issuer_name = #{issuerName}, sw_sector = #{swSector}, sw_sub_sector = #{swSubSector},
+            province = #{province},city = #{city},register_capital = #{registerCapital}
+        where issuer_code = #{issuerCode} ;
+    </update>
+
+    <delete id="deleteIssuerInfo">
+        delete from issuer_info where issuer_code = #{issuerCode}
+    </delete>
+
+    <select id="getAllIssuer" resultMap="issuer_column_mapping">
+        select * from issuer_info
+    </select>
+</mapper>

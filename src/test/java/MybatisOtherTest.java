@@ -1,5 +1,7 @@
-import entity.Underwriter;
-import mapper.UnderwriterMapper;
+import entity.BondInfo;
+import entity.IssuerInfo;
+import mapper.BondInfoMapper;
+import mapper.IssuerInfoMapper;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
@@ -25,14 +27,14 @@ public class MybatisOtherTest {
         SqlSession openSession = getSqlSessionFactory().openSession(ExecutorType.BATCH); //执行时长：2590
         //SqlSession openSession = getSqlSessionFactory().openSession();    //执行时长：287955
         try {
-            UnderwriterMapper mapper = openSession.getMapper(UnderwriterMapper.class);
+            IssuerInfoMapper mapper = openSession.getMapper(IssuerInfoMapper.class);
             long start = System.currentTimeMillis();
             for (int i = 0; i < 10000; i++) {
-                Underwriter underwriter = new Underwriter();
-                underwriter.setUnderwriterId("test" + i);
-                underwriter.setUnderwriterName("aa" + i);
-                underwriter.setFullName("AA" + i);
-                mapper.addUnderwriter(underwriter);
+                IssuerInfo issuerInfo = new IssuerInfo();
+                issuerInfo.setIssuerCode("test" + i);
+                issuerInfo.setIssuerName("aa" + i);
+                issuerInfo.setSwSector("AA" + i);
+                mapper.addIssuerInfo(issuerInfo);
             }
             long end = System.currentTimeMillis();
 
