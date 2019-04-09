@@ -56,7 +56,12 @@ public class PluginTest {
         try {
             IssuerInfoMapper mapper = openSession.getMapper(IssuerInfoMapper.class);
             //分页
-            Page<Object> page = PageHelper.startPage(10, 5);
+            /*
+                //
+                Page<Object> page = PageHelper.startPage(10, 5);
+                page.setOrderBy("id desc");
+            */
+            Page<Object> page = PageHelper.startPage(10, 5, "id desc");
 
             List<IssuerInfo> list = mapper.getAllIssuer();
             for (IssuerInfo issuerInfo : list) {
