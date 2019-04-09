@@ -84,14 +84,17 @@ public class PluginTest {
             System.out.println("每页记录数 :" + pageInfo.getPageSize());
             System.out.println("总页码 :" + pageInfo.getPages());
 
-            int[] nums = pageInfo.getNavigatepageNums();
-            for (int num : nums) {
-                System.out.println(num);
-            }
+            //获取导航页
             //int navigatePages = pageInfo.getNavigatePages();
             //int navigateFirstPage = pageInfo.getNavigateFirstPage();
             //int navigateLastPage = pageInfo.getNavigateLastPage();
             //  首页  1 2 3 4 5 6 7 8 9 10  尾页
+
+            int[] nums = pageInfo.getNavigatepageNums();
+            for (int num : nums) {
+                System.out.println(num);
+            }
+
         }finally {
             openSession.close();
         }
